@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.adflake.sampleapp"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="7"
+        android:targetSdkVersion="18" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/icon"
+        android:label="@string/app_name" >
+        <activity
+            android:name="com.adflake.SampleActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!--
+                 Activity-specific AdFlake SDK Key 
+                 If both Activity-specific and App-wide AdFlake SDK Keys are specified, the
+                 Activity-specific key will override the App-wide key.
+            -->
+            <!-- If Activity-specific key is omitted, the App-wide key will be used (at the end of this manifest). -->
+            <!-- <meta-data android:value="52457efc3a945c8936000002" android:name="ADFLAKE_KEY" /> -->
+        </activity>
+
+        <!-- AdMob integration -->
+        <activity
+            android:name="com.google.ads.AdActivity"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenLayout|uiMode|screenSize|smallestScreenSize" />
+
+        <!-- MdotM integration -->
+        <activity
+            android:name="com.mdotm.android.view.MdotMActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" />
+
+        <!-- Millennial integration -->
+        <activity
+            android:name="com.millennialmedia.android.MMActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+        </activity>
+
+        <!-- InMobi integration -->
+        <activity
+            android:name="com.inmobi.androidsdk.IMBrowserActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard|screenSize|smallestScreenSize" />
+
+        <!-- KomliMobile integration (Not functional currently due to major issues in their SDK!) -->
+        <activity
+            android:name="com.komlimobile.sdk.KomliMobileActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
+
+        <!-- MobClix integration -->
+        <activity
+            android:name="com.mobclix.android.sdk.MobclixBrowserActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- GreyStripe integration -->
+        <activity
+            android:name="com.greystripe.sdk.GSFullscreenActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
+
+        <!-- Amazon integration -->
+        <activity
+            android:name="com.amazon.device.ads.AdActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <!-- Mobfox integration -->
+        <activity
+            android:name="com.adsdk.sdk.banner.InAppWebView"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
+
+        <!--
+             Application-wide AdFlake SDK Key 
+             If both Activity-specific and App-wide AdFlake SDK Keys are specified, the
+             Activity-specific key will override the App-wide key.
+        -->
+        <!-- If Activity-specific key is omitted, the App-wide key will be used. -->
+        <meta-data
+            android:name="ADFLAKE_KEY"
+            android:value="52457efc3a945c8936000002" />
+    </application>
+
+</manifest>

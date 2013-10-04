@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, AdFlake!</string>
+    <string name="app_name">AdFlake Android SDK Sample</string>
+    <string name="below_layout_xml">AdFlakeLayout from XML</string>
+</resources>

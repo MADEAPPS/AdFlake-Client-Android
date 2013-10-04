@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="gen"/>
+	<classpathentry excluding="com/adflake/adapters/NexageAdapter.java" kind="src" path="src"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry exported="true" kind="lib" path="libs/MMSDK.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/komlimobile.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/MdotM-Android-SDK-2.1.7.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/InMobiAdNetwork-3.7.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/GoogleAdMobAdsSdk-6.4.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/mobclix.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/greystripe-android-sdk-2.3.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/JtAdTag-2.5.0.0-120327.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/amazon-ads-5.1.40.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/leadbolt.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/AdSdk_4.1.6.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/TodacellSDK.jar"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry kind="output" path="bin/classes"/>
+</classpath>
