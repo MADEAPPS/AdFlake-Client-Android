@@ -120,6 +120,10 @@ public class AdFlakeLayout extends RelativeLayout
 	public AdFlakeLayout(Context context, AttributeSet attrs)
 	{
 		super(context, attrs);
+		
+		if (this.isInEditMode())
+			return;
+		
 		// Retrieves AdFlake key.
 		String key = getAdFlakeKey(context);
 		init((Activity) context, key);
@@ -172,6 +176,9 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	protected String getAdFlakeKey(Context context)
 	{
+		if (this.isInEditMode())
+			return "EDITMODE";
+		
 		final String packageName = context.getPackageName();
 		final String activityName = context.getClass().getName();
 		final PackageManager pm = context.getPackageManager();
@@ -220,13 +227,18 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	protected void init(final Activity context, final String adFlakeKey)
 	{
+		
 		this.activityReference = new WeakReference<Activity>(context);
 		this.superViewReference = new WeakReference<RelativeLayout>(this);
 		this._adFlakeKey = adFlakeKey;
 		this._hasWindow = true;
 		this._isScheduled = true;
-		scheduler.schedule(new UpdateAdFlakeConfigurationRunnable(this, adFlakeKey), 0, TimeUnit.SECONDS);
+		
 
+		if (!this.isInEditMode()) 
+		{
+			scheduler.schedule(new UpdateAdFlakeConfigurationRunnable(this, adFlakeKey), 0, TimeUnit.SECONDS);
+		}
 		setHorizontalScrollBarEnabled(false);
 		setVerticalScrollBarEnabled(false);
 
@@ -270,7 +282,7 @@ public class AdFlakeLayout extends RelativeLayout
 	@Override
 	protected void onWindowVisibilityChanged(int visibility)
 	{
-		if (visibility == VISIBLE)
+		if (visibility == VISIBLE && !this.isInEditMode())
 		{
 			this._hasWindow = true;
 			if (!this._isScheduled)
@@ -387,7 +399,10 @@ public class AdFlakeLayout extends RelativeLayout
 		this.activeRation = nextRation;
 		sendImpressionToMetricServer();
 
-		this.adFlakeInterface.adFlakeDidPushAdSubView(this);
+		if (this.adFlakeInterface != null)
+		{
+			this.adFlakeInterface.adFlakeDidPushAdSubView(this);
+		}
 	}
 
 	/**
@@ -433,6 +448,9 @@ public class AdFlakeLayout extends RelativeLayout
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent event)
 	{
+		if (this.isInEditMode())
+			return false;
+		
 		switch (event.getAction())
 		{
 		// Sending on an ACTION_DOWN isn't 100% correct... user could have

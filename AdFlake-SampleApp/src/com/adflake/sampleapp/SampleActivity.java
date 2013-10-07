@@ -72,14 +72,10 @@ public class SampleActivity extends Activity implements AdFlakeInterface
 
 		// These are density-independent pixel units, as defined in
 		// http://developer.android.com/guide/practices/screens_support.html
-		int width = 320;
-		int height = 52;
-
 		DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-		float density = displayMetrics.density;
-
-		width = (int) (width * density);
-		height = (int) (height * density);
+		final float density = displayMetrics.density;
+		final int width = (int) (AdFlakeUtil.BANNER_DEFAULT_WIDTH * density);
+		final int height = (int) (AdFlakeUtil.BANNER_DEFAULT_HEIGHT * density);
 
 		AdFlakeTargeting.setAge(23);
 		AdFlakeTargeting.setGender(AdFlakeTargeting.Gender.MALE);
