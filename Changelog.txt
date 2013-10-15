@@ -2,6 +2,9 @@
 
 For a full detailed change log visit http://adflake.com/SDK
 
+==== Version 4.0.1 (Oct 15 2013) ====
+- Added AppBrain AppLift adapter
+
 ==== Version 4.0.0 (Oct 1 2013) ====
 - Updated all network adapters
 - Initial public version

@@ -76,7 +76,7 @@ public abstract class AdFlakeAdapter
 	private static AdFlakeAdapter getAdapter(AdFlakeLayout adFlakeLayout, Ration ration)
 	{
 		try
-		{			
+		{				
 			switch (ration.type)
 			{
 				case AdFlakeUtil.NETWORK_TYPE_ADMOB:
@@ -114,6 +114,9 @@ public abstract class AdFlakeAdapter
 					
 				case AdFlakeUtil.NETWORK_TYPE_TODACELL:
 					return getInstanceOfNetworkAdapterWithClassName("com.adflake.adapters.TodacellAdapter", adFlakeLayout, ration);
+					
+				case AdFlakeUtil.NETWORK_TYPE_APPBRAIN:
+					return getInstanceOfNetworkAdapterWithClassName("com.adflake.adapters.AppBrainAppLiftAdapter", adFlakeLayout, ration);
 					
 				case AdFlakeUtil.NETWORK_TYPE_CUSTOM:
 					return new CustomAdapter(adFlakeLayout, ration);

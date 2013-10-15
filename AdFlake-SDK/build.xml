@@ -87,7 +87,7 @@
 	<property name="bin.dir" value="bin" />
 	<property name="assets.dir" value="com/adflake/assets" />
 	<property name="README.dir" value="${src.dir}/com/adflake" />
-	
+
 	<target name="adflake.clean" description="Cleans bin and dist directories.">
 		<delete dir="${bin.dir}" includeEmptyDirs="true" />
 		<delete dir="${dist.dir}" includeEmptyDirs="true" />

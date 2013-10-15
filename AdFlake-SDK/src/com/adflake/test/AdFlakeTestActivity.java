@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-package com.adflake.sampleapp;
+package com.adflake.test;
 
 import com.adflake.AdFlakeLayout;
 import com.adflake.AdFlakeLayout.AdFlakeInterface;
@@ -50,7 +50,7 @@ import java.util.HashSet;
  * The Class SampleActivity demonstrates the use of the AdFlakeLayout when used
  * in an XML environment or created programatically.
  */
-public class SampleActivity extends Activity implements AdFlakeInterface
+public class AdFlakeTestActivity extends Activity implements AdFlakeInterface
 {
 	/*
 	 * (non-Javadoc)

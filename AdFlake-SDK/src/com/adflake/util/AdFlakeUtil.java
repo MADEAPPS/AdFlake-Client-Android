@@ -53,7 +53,7 @@ public class AdFlakeUtil
 
 	public static final int		BANNER_DEFAULT_HEIGHT		= 50;
 	public static final int		BANNER_DEFAULT_WIDTH		= 320;
-	
+
 	public static final int		VERSION						= 400;
 
 	public static final String	ADFLAKE						= "AdFlake SDK";
@@ -85,6 +85,7 @@ public class AdFlakeUtil
 	public static final int		NETWORK_TYPE_MOJIVA			= 28;
 	public static final int		NETWORK_TYPE_HUNTMOBILE		= 29;
 	public static final int		NETWORK_TYPE_TODACELL		= 30;
+	public static final int		NETWORK_TYPE_APPBRAIN		= 31;
 
 	public static final int		CUSTOM_TYPE_BANNER			= 1;
 	public static final int		CUSTOM_TYPE_ICON			= 2;

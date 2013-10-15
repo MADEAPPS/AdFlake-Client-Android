@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.adflake.sampleapp"
+    package="com.adflake.test"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -20,7 +20,7 @@
         android:icon="@drawable/icon"
         android:label="@string/app_name" >
         <activity
-            android:name="com.adflake.SampleActivity"
+            android:name="com.adflake.test.AdFlakeTestActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -84,6 +84,18 @@
             android:name="com.adsdk.sdk.banner.InAppWebView"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
 
+        <!-- AppBrain AppLift SDK - NOTE: only uncomment when AppBrain SDK lib is included! -->
+        <!--
+			<activity android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" 
+				    android:name="com.appbrain.AppBrainActivity" />
+			<receiver android:exported="false" android:name="com.appbrain.ReferrerReceiver" >
+				<intent-filter>
+					<action android:name="com.android.vending.INSTALL_REFERRER" />
+				</intent-filter>
+			</receiver>
+			<service android:name="com.appbrain.AppBrainService" />
+        -->
+		
         <!--
              Application-wide AdFlake SDK Key 
              If both Activity-specific and App-wide AdFlake SDK Keys are specified, the
