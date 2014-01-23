@@ -2,6 +2,9 @@
 
 For a full detailed change log visit http://adflake.com/SDK
 
+==== Version 4.0.2 (Jan 23 2014) [Internal] ====
+- Added "sleeper mode" when no ads are configured (Android)
+
 ==== Version 4.0.1 (Oct 15 2013) ====
 - Added AppBrain AppLift adapter
 

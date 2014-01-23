@@ -584,7 +584,13 @@ public class AdFlakeLayout extends RelativeLayout
 				adFlakeLayout.adFlakeManager.fetchConfigFromServer();
 				adFlakeLayout.extra = adFlakeLayout.adFlakeManager.getExtra();
 
-				if (adFlakeLayout.extra == null)
+				if (adFlakeLayout.adFlakeManager.sleeperMode == true)
+				{
+					// NOTE: if we do not have a configuration it's highly probable that
+					// we're in sleeper more, so only check every 10 minutes
+					adFlakeLayout.scheduler.schedule(this, 600, TimeUnit.SECONDS);
+				}
+				else if (adFlakeLayout.extra == null)
 				{
 					adFlakeLayout.scheduler.schedule(this, 30, TimeUnit.SECONDS);
 				}

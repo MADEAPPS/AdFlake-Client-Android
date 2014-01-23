@@ -76,6 +76,8 @@ public class AdFlakeManager
 	public String	localeString;
 	public String	deviceIDHash;
 
+	public boolean	sleeperMode;
+
 	public Location	location;
 
 	/**
@@ -91,6 +93,8 @@ public class AdFlakeManager
 		Log.i(AdFlakeUtil.ADFLAKE, "Creating adFlakeManager...");
 		this._contextReference = contextReference;
 		this.adFlakeKey = adFlakeKey;
+		
+		this.sleeperMode = false;
 
 		localeString = Locale.getDefault().toString();
 		Log.d(AdFlakeUtil.ADFLAKE, "Locale is: " + localeString);
@@ -132,7 +136,6 @@ public class AdFlakeManager
 	{
 		if (_totalWeight <= 0)
 		{
-			Log.i(AdFlakeUtil.ADFLAKE, "Sum of ration weights is 0 - no ads to be shown");
 			return null;
 		}
 		else
@@ -503,6 +506,16 @@ public class AdFlakeManager
 
 		Collections.sort(rationsList);
 
+		if (this._totalWeight <= 0)
+		{
+			Log.i(AdFlakeUtil.ADFLAKE, "Sum of ration weights is 0 - no ads to be shown, sleeper mode enabled");
+			this.sleeperMode = true;
+		}
+		else
+		{
+			this.sleeperMode = false;
+		}
+		
 		this._rationsList = rationsList;
 		this._rollovers = this._rationsList.iterator();
 	}
