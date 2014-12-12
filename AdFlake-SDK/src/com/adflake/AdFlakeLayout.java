@@ -1,7 +1,7 @@
 /**
  * AdFlakeLayout.java (AdFlakeSDK-Android)
  *
- * Copyright © 2013 MADE GmbH - All Rights Reserved.
+ * Copyright ï¿½ 2013 MADE GmbH - All Rights Reserved.
  *
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * unless otherwise noted in the License section of this document header.
@@ -26,6 +26,8 @@ package com.adflake;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -66,8 +68,8 @@ import com.adflake.util.AdFlakeUtil;
  */
 public class AdFlakeLayout extends RelativeLayout
 {
-	public static final String				ADFLAKE_KEY	= "ADFLAKE_KEY";
-	public WeakReference<Activity>			activityReference;
+	public static final String ADFLAKE_KEY = "ADFLAKE_KEY";
+	public WeakReference<Activity> activityReference;
 
 	/**
 	 * The UI handler.
@@ -75,25 +77,25 @@ public class AdFlakeLayout extends RelativeLayout
 	 * @note Only the UI thread can update the UI, so we need a Handler for UI
 	 *       callbacks
 	 */
-	public final Handler					handler		= new Handler();
+	public final Handler handler = new Handler();
 
 	/**
 	 * The background scheduler manages background threads.
 	 */
-	public final ScheduledExecutorService	scheduler	= Executors.newScheduledThreadPool(1);
-	public Extra							extra;
+	public final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	public Extra extra;
 
-	public Custom							currentCustom;
+	public Custom currentCustom;
 
 	/** @note This is just so our threads can reference us explicitly. */
-	public WeakReference<RelativeLayout>	superViewReference;
+	public WeakReference<RelativeLayout> superViewReference;
 
-	public Ration							activeRation;
-	public Ration							nextRation;
+	public Ration activeRation;
+	public Ration nextRation;
 
-	public AdFlakeInterface					adFlakeInterface;
+	public AdFlakeInterface adFlakeInterface;
 
-	public AdFlakeManager					adFlakeManager;
+	public AdFlakeManager adFlakeManager;
 
 	/**
 	 * Instantiates a new ad flake layout.
@@ -120,10 +122,10 @@ public class AdFlakeLayout extends RelativeLayout
 	public AdFlakeLayout(Context context, AttributeSet attrs)
 	{
 		super(context, attrs);
-		
+
 		if (this.isInEditMode())
 			return;
-		
+
 		// Retrieves AdFlake key.
 		String key = getAdFlakeKey(context);
 		init((Activity) context, key);
@@ -137,10 +139,10 @@ public class AdFlakeLayout extends RelativeLayout
 	public LayoutParams getOptimalRelativeLayoutParams()
 	{
 		DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-		
+
 		final float density = displayMetrics.density;
 		final int width = (int) (AdFlakeUtil.BANNER_DEFAULT_WIDTH * density);
-		final int height = (int) (AdFlakeUtil.BANNER_DEFAULT_HEIGHT * density); 
+		final int height = (int) (AdFlakeUtil.BANNER_DEFAULT_HEIGHT * density);
 
 		return new RelativeLayout.LayoutParams(width, height);
 	}
@@ -178,7 +180,7 @@ public class AdFlakeLayout extends RelativeLayout
 	{
 		if (this.isInEditMode())
 			return "EDITMODE";
-		
+
 		final String packageName = context.getPackageName();
 		final String activityName = context.getClass().getName();
 		final PackageManager pm = context.getPackageManager();
@@ -227,15 +229,14 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	protected void init(final Activity context, final String adFlakeKey)
 	{
-		
+
 		this.activityReference = new WeakReference<Activity>(context);
 		this.superViewReference = new WeakReference<RelativeLayout>(this);
 		this._adFlakeKey = adFlakeKey;
 		this._hasWindow = true;
 		this._isScheduled = true;
-		
 
-		if (!this.isInEditMode()) 
+		if (!this.isInEditMode())
 		{
 			scheduler.schedule(new UpdateAdFlakeConfigurationRunnable(this, adFlakeKey), 0, TimeUnit.SECONDS);
 		}
@@ -316,6 +317,12 @@ public class AdFlakeLayout extends RelativeLayout
 			return;
 		}
 
+		if (adFlakeManager.sleeperMode)
+		{
+			Log.d(AdFlakeUtil.ADFLAKE, "AdFlake has no rations and is in sleeper mode");
+			return;
+		}
+
 		Log.i(AdFlakeUtil.ADFLAKE, "Rotating Ad");
 		nextRation = adFlakeManager.getDartedRation();
 
@@ -348,7 +355,7 @@ public class AdFlakeLayout extends RelativeLayout
 				this._previousAdapter.willDestroy();
 			}
 			this._previousAdapter = this._currentAdapter;
-			this._currentAdapter = AdFlakeAdapter.getAdapterForRation(this, nextRation);
+			this._currentAdapter = AdFlakeAdapter.getAdapterForRation(this, nextRation, true);
 		}
 		catch (Throwable t)
 		{
@@ -410,6 +417,12 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	public void rollover()
 	{
+		if (adFlakeManager.sleeperMode)
+		{
+			Log.d(AdFlakeUtil.ADFLAKE, "AdFlake has no rations and is in sleeper mode");
+			return;
+		}
+
 		nextRation = adFlakeManager.getRationForCurrentRolloverListPosition();
 		handler.post(new HandleAdRunnable(this));
 	}
@@ -419,11 +432,22 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	private void sendImpressionToMetricServer()
 	{
-		if (activeRation != null)
-		{
-			String url = String.format(AdFlakeUtil.urlImpression, adFlakeManager.adFlakeKey, activeRation.nid, activeRation.type, adFlakeManager.deviceIDHash, adFlakeManager.localeString, AdFlakeUtil.VERSION);
-			scheduler.schedule(new PingUrlRunnable(url), 0, TimeUnit.SECONDS);
-		}
+		if (activeRation == null)
+			return;
+
+		sendImpressionToMetricServerForRation(activeRation);
+	}
+
+	/**
+	 * Send impression to metric server.
+	 */
+	private void sendImpressionToMetricServerForRation(Ration ration)
+	{
+		if (ration == null)
+			return;
+
+		String url = String.format(AdFlakeUtil.urlImpression, adFlakeManager.adFlakeKey, ration.nid, ration.type, adFlakeManager.deviceIDHash, adFlakeManager.localeString, AdFlakeUtil.VERSION);
+		scheduler.schedule(new PingUrlRunnable(url), 0, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -431,11 +455,22 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	private void sendAdClickToMetricServer()
 	{
-		if (activeRation != null)
-		{
-			String url = String.format(AdFlakeUtil.urlClick, adFlakeManager.adFlakeKey, activeRation.nid, activeRation.type, adFlakeManager.deviceIDHash, adFlakeManager.localeString, AdFlakeUtil.VERSION);
-			scheduler.schedule(new PingUrlRunnable(url), 0, TimeUnit.SECONDS);
-		}
+		if (activeRation == null)
+			return;
+
+		sendAdClickToMetricServerForRation(activeRation);
+	}
+
+	/**
+	 * Send ad click to metric server.
+	 */
+	private void sendAdClickToMetricServerForRation(Ration ration)
+	{
+		if (ration == null)
+			return;
+
+		String url = String.format(AdFlakeUtil.urlClick, adFlakeManager.adFlakeKey, ration.nid, ration.type, adFlakeManager.deviceIDHash, adFlakeManager.localeString, AdFlakeUtil.VERSION);
+		scheduler.schedule(new PingUrlRunnable(url), 0, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -450,7 +485,7 @@ public class AdFlakeLayout extends RelativeLayout
 	{
 		if (this.isInEditMode())
 			return false;
-		
+
 		switch (event.getAction())
 		{
 		// Sending on an ACTION_DOWN isn't 100% correct... user could have
@@ -519,6 +554,18 @@ public class AdFlakeLayout extends RelativeLayout
 		 *            the layout
 		 */
 		public void adFlakeDidPushAdSubView(AdFlakeLayout layout);
+
+		public void adFlakeDidPresentFullScreenModal(AdFlakeLayout layout);
+
+		public void adFlakeWillPresentFullScreenModal(AdFlakeLayout layout);
+
+		public void adFlakeWillPresentVideoAdModal(AdFlakeLayout layout);
+
+		public void adFlakeDidFailToRequestVideoAd(AdFlakeLayout layout);
+
+		public void adFlakeUserDidWatchEntireVideo(AdFlakeLayout layout);
+
+		public void adFlakeDidLoadVideoAd(AdFlakeLayout layout);
 	}
 
 	/**
@@ -538,8 +585,8 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	private static class UpdateAdFlakeConfigurationRunnable implements Runnable
 	{
-		private WeakReference<AdFlakeLayout>	_adFlakeLayoutReference;
-		private String							_adFlakeKey;
+		private WeakReference<AdFlakeLayout> _adFlakeLayoutReference;
+		private String _adFlakeKey;
 
 		/**
 		 * Instantiates a new update ad flake configuration runnable.
@@ -557,11 +604,12 @@ public class AdFlakeLayout extends RelativeLayout
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Runnable#run()
 		 */
 		public void run()
 		{
-			AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
+			final AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
 			if (adFlakeLayout != null)
 			{
 				Activity activity = adFlakeLayout.activityReference.get();
@@ -584,9 +632,26 @@ public class AdFlakeLayout extends RelativeLayout
 				adFlakeLayout.adFlakeManager.fetchConfigFromServer();
 				adFlakeLayout.extra = adFlakeLayout.adFlakeManager.getExtra();
 
+				if (adFlakeLayout.adFlakeManager.videoAdsAvailable)
+				{
+					// NOTE: we have to prepare the video adapters since they
+					// preload
+
+					adFlakeLayout.handler.post(new Runnable()
+					{
+
+						@Override
+						public void run()
+						{
+							adFlakeLayout.prepareVideoAdapters();
+						}
+					});
+				}
+
 				if (adFlakeLayout.adFlakeManager.sleeperMode == true)
 				{
-					// NOTE: if we do not have a configuration it's highly probable that
+					// NOTE: if we do not have a configuration it's highly
+					// probable that
 					// we're in sleeper more, so only check every 10 minutes
 					adFlakeLayout.scheduler.schedule(this, 600, TimeUnit.SECONDS);
 				}
@@ -607,7 +672,7 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	private static class HandleAdRunnable implements Runnable
 	{
-		private WeakReference<AdFlakeLayout>	adFlakeLayoutReference;
+		private WeakReference<AdFlakeLayout> adFlakeLayoutReference;
 
 		/**
 		 * Instantiates a new handle ad runnable.
@@ -622,6 +687,7 @@ public class AdFlakeLayout extends RelativeLayout
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Runnable#run()
 		 */
 		public void run()
@@ -640,8 +706,8 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	public static class PushAdViewRunnable implements Runnable
 	{
-		private WeakReference<AdFlakeLayout>	adFlakeLayoutReference;
-		private ViewGroup						nextView;
+		private WeakReference<AdFlakeLayout> adFlakeLayoutReference;
+		private ViewGroup nextView;
 
 		/**
 		 * Instantiates a new view ad runnable.
@@ -659,6 +725,7 @@ public class AdFlakeLayout extends RelativeLayout
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Runnable#run()
 		 */
 		public void run()
@@ -676,7 +743,7 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	private static class RotateAdRunnable implements Runnable
 	{
-		private WeakReference<AdFlakeLayout>	adFlakeLayoutReference;
+		private WeakReference<AdFlakeLayout> adFlakeLayoutReference;
 
 		/**
 		 * Instantiates a new rotate ad runnable.
@@ -691,6 +758,7 @@ public class AdFlakeLayout extends RelativeLayout
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Runnable#run()
 		 */
 		public void run()
@@ -710,7 +778,7 @@ public class AdFlakeLayout extends RelativeLayout
 	 */
 	private static class PingUrlRunnable implements Runnable
 	{
-		private String	url;
+		private String url;
 
 		/**
 		 * Instantiates a new ping url runnable.
@@ -725,6 +793,7 @@ public class AdFlakeLayout extends RelativeLayout
 
 		/*
 		 * (non-Javadoc)
+		 * 
 		 * @see java.lang.Runnable#run()
 		 */
 		public void run()
@@ -782,16 +851,237 @@ public class AdFlakeLayout extends RelativeLayout
 		this.rotateThreadedDelayed();
 	}
 
-	private String			_adFlakeKey;
+	public void prepareVideoAdapters()
+	{
+		this.adFlakeManager.prepareVideoAdaptersForLayout(this);
+	}
+
+	private void requestVideoAdAndPresent(boolean presentVideoAd)
+	{
+		if (!adFlakeManager.videoAdsAvailable)
+		{
+			Log.d(AdFlakeUtil.ADFLAKE, "video ads are not available");
+			this.adFlakeInterface.adFlakeDidFailToRequestVideoAd(this);
+			return;
+		}
+		if (_usedVideoRations != null)
+		{
+			// this means that an interstitial request is already active
+			Log.d(AdFlakeUtil.ADFLAKE, "interstitial request already active for layout");
+			this.adFlakeInterface.adFlakeDidFailToRequestVideoAd(this);
+			return;
+		}
+		if (_videoAdLoaded)
+		{
+			if (presentVideoAd)
+			{
+				presentLoadedVideoAd();
+				return;
+			}
+			Log.e(AdFlakeUtil.ADFLAKE, "VIDEO ERROR: video already loaded");
+			this.adFlakeInterface.adFlakeDidFailToRequestVideoAd(this);
+			return;
+		}
+
+		_autoPresentVideoAd = presentVideoAd;
+		_usedVideoRations = new ArrayList<Ration>();
+
+		tryRequestNextVideoAd();
+	}
+
+	public void requestVideoAd()
+	{
+		requestVideoAdAndPresent(false);
+	}
+
+	public void requestAndPresentVideoAd()
+	{
+		requestVideoAdAndPresent(true);
+	}
+
+	private void didFailActiveVideoAdRequest()
+	{
+		this.adFlakeInterface.adFlakeDidFailToRequestVideoAd(this);
+		_usedVideoRations = null;
+		_autoPresentVideoAd = false;
+	}
+
+	private void tryRequestNextVideoAd()
+	{
+		if (_usedVideoRations == null)
+		{
+			Log.d(AdFlakeUtil.ADFLAKE, "no request active");
+			this.adFlakeInterface.adFlakeDidFailToRequestVideoAd(this);
+			return;
+		}
+		if (_usedVideoRations.size() == this.adFlakeManager.getVideoRationCount())
+		{
+			Log.d(AdFlakeUtil.ADFLAKE, "no video ads left to try");
+			didFailActiveVideoAdRequest();
+			return;
+		}
+		if (_videoAdLoaded)
+		{
+			Log.e(AdFlakeUtil.ADFLAKE, "VIDEO ERROR: video already loaded");
+			didFailActiveVideoAdRequest();
+			return;
+		}
+
+		Ration videoRation = this.adFlakeManager.getNextDartedVideoRation(_usedVideoRations);
+
+		if (videoRation == null)
+		{
+			Log.d(AdFlakeUtil.ADFLAKE, "video ads are not available");
+			didFailActiveVideoAdRequest();
+			return;
+		}
+
+		if (_currentVideoAdapter != null && _currentVideoAdapter.getRation() == videoRation)
+		{
+			Log.d(AdFlakeUtil.ADFLAKE, "already played network, increasing chance for other networks");
+			// increase chance of using another network's ad
+			videoRation = this.adFlakeManager.getNextDartedVideoRation(_usedVideoRations);
+		}
+
+		_usedVideoRations.add(videoRation);
+
+		String rationInfo = String.format("Showing ad:\n\tnid: %s\n\tname: %s\n\ttype: %d\n\tkey: %s\n\tkey2: %s", videoRation.nid, videoRation.name, videoRation.type, videoRation.key,
+				videoRation.key2);
+		Log.d(AdFlakeUtil.ADFLAKE, rationInfo);
+
+		try
+		{
+			// Tell the previous adapter that its view will be destroyed.
+			if (this._previousVideoAdapter != null)
+			{
+				this._previousVideoAdapter.willDestroy();
+			}
+			this._previousVideoAdapter = this._currentAdapter;
+			this._currentVideoAdapter = AdFlakeAdapter.getAdapterForRation(this, videoRation, false);
+			this._currentVideoAdapter.handle();
+		}
+		catch (Throwable t)
+		{
+			Log.w(AdFlakeUtil.ADFLAKE, "Caught an exception in adapter:", t);
+
+			tryRequestNextVideoAd();
+			return;
+		}
+	}
+
+	/**
+	 * @param adapter
+	 * @param string
+	 */
+	public void adapterDidFailToReceiveVideoAdWithError(AdFlakeAdapter adapter, String string)
+	{
+		Log.e(AdFlakeUtil.ADFLAKE, "VIDEOAD ERROR: " + adapter.getRation().name + ": " + string);
+		tryRequestNextVideoAd();
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public boolean isVideoAdLoaded()
+	{
+		return _videoAdLoaded;
+	}
+
+	/**
+	 * 
+	 */
+	public void presentLoadedVideoAd()
+	{
+		if (!_videoAdLoaded || this._currentVideoAdapter == null)
+		{
+			if (_autoPresentVideoAd)
+			{
+				Log.e(AdFlakeUtil.ADFLAKE, "VIDEOAD ERROR: load and present failed");
+				didFailActiveVideoAdRequest();
+			}
+			Log.e(AdFlakeUtil.ADFLAKE, "VIDEOAD ERROR: No video loaded");
+			return;
+		}
+
+		if (this.adFlakeInterface != null)
+		{
+			this.adFlakeInterface.adFlakeWillPresentVideoAdModal(this);
+			this.adFlakeInterface.adFlakeWillPresentFullScreenModal(this);
+		}
+
+		sendImpressionToMetricServerForRation(_currentVideoAdapter.getRation());
+
+		_currentVideoAdapter.playLoadedVideoAd();
+
+		_autoPresentVideoAd = false;
+	}
+
+	/**
+	 * 
+	 * @param adapter
+	 */
+	public void adapterDidReceiveVideoAd(AdFlakeAdapter adapter)
+	{
+		_usedVideoRations = null;
+		_videoAdLoaded = true;
+
+		if (this.adFlakeInterface != null)
+		{
+			this.adFlakeInterface.adFlakeDidLoadVideoAd(this);
+		}
+
+		if (_autoPresentVideoAd)
+		{
+			presentLoadedVideoAd();
+		}
+	}
+
+	/**
+	 * 
+	 * @param adapter
+	 */
+	public void adapterDidFinishVideoAd(AdFlakeAdapter adapter, boolean userDidWatchEntireVideo)
+	{
+		if (this.adFlakeInterface != null)
+		{
+			this.adFlakeInterface.adFlakeDidPresentFullScreenModal(this);
+
+			if (userDidWatchEntireVideo)
+				this.adFlakeInterface.adFlakeUserDidWatchEntireVideo(this);
+		}
+
+		_videoAdLoaded = false;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	public Ration getCurrentVideoRation()
+	{
+		if (_currentVideoAdapter == null)
+			return null;
+
+		return _currentVideoAdapter.getRation();
+	}
+
+	private String _adFlakeKey;
 
 	/** Added so we can tell the previous adapter that it is being destroyed. */
-	private AdFlakeAdapter	_previousAdapter;
-	private AdFlakeAdapter	_currentAdapter;
+	private AdFlakeAdapter _previousAdapter;
+	private AdFlakeAdapter _currentAdapter;
 
-	private boolean			_hasWindow;
-	private boolean			_isScheduled;
+	private AdFlakeAdapter _previousVideoAdapter;
+	private AdFlakeAdapter _currentVideoAdapter;
+	private List<Ration> _usedVideoRations;
+	private boolean _autoPresentVideoAd;
+	private boolean _videoAdLoaded;
 
-	private int				_maximumWidth;
+	private boolean _hasWindow;
+	private boolean _isScheduled;
 
-	private int				_maximumHeight;
+	private int _maximumWidth;
+
+	private int _maximumHeight;
 }

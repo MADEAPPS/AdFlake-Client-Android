@@ -1,7 +1,7 @@
 /**
  * AdFlakeAdapter.java (AdFlakeSDK-Android)
  *
- * Copyright © 2013 MADE GmbH - All Rights Reserved.
+ * Copyright ï¿½ 2013 MADE GmbH - All Rights Reserved.
  *
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * unless otherwise noted in the License section of this document header.
@@ -81,6 +81,15 @@ public abstract class AdFlakeAdapter
 			{
 				case AdFlakeUtil.NETWORK_TYPE_ADMOB:
 					return getInstanceOfNetworkAdapterWithClassName("com.adflake.adapters.GoogleAdMobAdsAdapter", adFlakeLayout, ration);
+					
+				case AdFlakeUtil.NETWORK_TYPE_ADMOB_VIDEO:
+					return getInstanceOfNetworkAdapterWithClassName("com.adflake.adapters.GoogleAdMobVideoAdsAdapter", adFlakeLayout, ration);
+					
+				case AdFlakeUtil.NETWORK_TYPE_ADCOLONY:
+					return getInstanceOfNetworkAdapterWithClassName("com.adflake.adapters.AdColonyVideoAdsAdapter", adFlakeLayout, ration);
+					
+				case AdFlakeUtil.NETWORK_TYPE_BEACHFRONT:
+					return getInstanceOfNetworkAdapterWithClassName("com.adflake.adapters.BeachfrontVideoAdsAdapter", adFlakeLayout, ration);
 
 				case AdFlakeUtil.NETWORK_TYPE_INMOBI:
 					return getInstanceOfNetworkAdapterWithClassName("com.adflake.adapters.InMobiAdapter", adFlakeLayout, ration);
@@ -137,7 +146,7 @@ public abstract class AdFlakeAdapter
 			return handleUnknownAdNetwork(adFlakeLayout, ration);
 		}
 	}
-
+	
 	/**
 	 * Gets a new instance of the network adapter with the specified class name.
 	 *
@@ -200,13 +209,16 @@ public abstract class AdFlakeAdapter
 	 * @throws Throwable
 	 *             the throwable
 	 */
-	public static AdFlakeAdapter getAdapterForRation(AdFlakeLayout adFlakeLayout, Ration ration) throws Throwable
+	public static AdFlakeAdapter getAdapterForRation(AdFlakeLayout adFlakeLayout, Ration ration, boolean invokeHandle) throws Throwable
 	{
 		AdFlakeAdapter adapter = AdFlakeAdapter.getAdapter(adFlakeLayout, ration);
 		if (adapter != null)
 		{
-			Log.d(AdFlakeUtil.ADFLAKE, "Valid adapter (" + ration.name + "), calling handle()");
-			adapter.handle();
+			if (invokeHandle)
+			{
+				Log.d(AdFlakeUtil.ADFLAKE, "Valid adapter (" + ration.name + "), calling handle()");
+				adapter.handle();
+			}
 		}
 		else
 		{
@@ -227,6 +239,10 @@ public abstract class AdFlakeAdapter
 	public void willDestroy()
 	{
 		Log.d(AdFlakeUtil.ADFLAKE, "Generic adapter will get destroyed (" + _ration.name + ")");
+	}
+	
+	public void playLoadedVideoAd()
+	{
 	}
 
 	protected final WeakReference<AdFlakeLayout>	_adFlakeLayoutReference;

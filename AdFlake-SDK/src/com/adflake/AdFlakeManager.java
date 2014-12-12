@@ -1,7 +1,7 @@
 /**
  * AdFlakeManager.java (AdFlakeSDK-Android)
  *
- * Copyright © 2013 MADE GmbH - All Rights Reserved.
+ * Copyright ï¿½ 2013 MADE GmbH - All Rights Reserved.
  *
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * unless otherwise noted in the License section of this document header.
@@ -23,22 +23,6 @@
  */
 
 package com.adflake;
-
-import com.adflake.obj.Custom;
-import com.adflake.obj.Extra;
-import com.adflake.obj.Ration;
-import com.adflake.util.AdFlakeUtil;
-
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
-import android.location.Location;
-import android.location.LocationManager;
-import android.provider.Settings.Secure;
-import android.util.DisplayMetrics;
-import android.util.Log;
-import android.view.WindowManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -65,20 +49,38 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
+import android.location.Location;
+import android.location.LocationManager;
+import android.provider.Settings.Secure;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.WindowManager;
+
+import com.adflake.adapters.AdColonyVideoAdsAdapter;
+import com.adflake.obj.Custom;
+import com.adflake.obj.Extra;
+import com.adflake.obj.Ration;
+import com.adflake.util.AdFlakeUtil;
+
 /**
  * The AdFlakeManager class manages the AdFlake configuration. If necessary the
  * class will download it from a remote server.
  */
 public class AdFlakeManager
 {
-	public String	adFlakeKey;
+	public String adFlakeKey;
 
-	public String	localeString;
-	public String	deviceIDHash;
+	public String localeString;
+	public String deviceIDHash;
 
-	public boolean	sleeperMode;
+	public boolean sleeperMode;
+	public boolean videoAdsAvailable;
 
-	public Location	location;
+	public Location location;
 
 	/**
 	 * Instantiates a new ad flake manager.
@@ -93,7 +95,7 @@ public class AdFlakeManager
 		Log.i(AdFlakeUtil.ADFLAKE, "Creating adFlakeManager...");
 		this._contextReference = contextReference;
 		this.adFlakeKey = adFlakeKey;
-		
+
 		this.sleeperMode = false;
 
 		localeString = Locale.getDefault().toString();
@@ -390,6 +392,7 @@ public class AdFlakeManager
 
 			parseExtraJson(json.getJSONObject("extra"));
 			parseRationsJson(json.getJSONArray("rations"));
+			parseVideoRationsJson(json.getJSONArray("videoRations"));
 		}
 		catch (JSONException e)
 		{
@@ -515,9 +518,87 @@ public class AdFlakeManager
 		{
 			this.sleeperMode = false;
 		}
-		
+
 		this._rationsList = rationsList;
 		this._rollovers = this._rationsList.iterator();
+	}
+
+	/**
+	 * Parses the rations section from the specified json object.
+	 * 
+	 * @param json
+	 *            the json
+	 */
+	private void parseVideoRationsJson(JSONArray json)
+	{
+		List<Ration> rationsList = new ArrayList<Ration>();
+
+		_totalVideoWeight = 0;
+
+		try
+		{
+			int i;
+			for (i = 0; i < json.length(); i++)
+			{
+				JSONObject jsonRation = json.getJSONObject(i);
+				if (jsonRation == null)
+				{
+					continue;
+				}
+
+				Ration ration = new Ration();
+
+				ration.nid = jsonRation.getString("nid");
+				ration.type = jsonRation.getInt("type");
+				ration.name = jsonRation.getString("nname");
+				ration.weight = jsonRation.getInt("weight");
+				ration.priority = jsonRation.getInt("priority");
+
+				switch (ration.type)
+				{
+					case AdFlakeUtil.NETWORK_TYPE_BEACHFRONT:
+					case AdFlakeUtil.NETWORK_TYPE_ADCOLONY:
+						ration.key = jsonRation.getString("key");
+
+						int zoneIndex = ration.key.indexOf("|;|");
+						if (zoneIndex < 0)
+						{
+							Log.w(AdFlakeUtil.ADFLAKE, "key separator not found for network=" + ration.name);
+							continue;
+						}
+
+						ration.key2 = ration.key.substring(zoneIndex + 3);
+						ration.key = ration.key.substring(0, zoneIndex);
+						break;
+
+					default:
+						ration.key = jsonRation.getString("key");
+						break;
+				}
+
+				this._totalVideoWeight += ration.weight;
+
+				rationsList.add(ration);
+			}
+		}
+		catch (JSONException e)
+		{
+			Log.e(AdFlakeUtil.ADFLAKE, "JSONException in parsing config.rations JSON. This may or may not be fatal.", e);
+		}
+
+		Collections.sort(rationsList);
+
+		if (_totalVideoWeight <= 0)
+		{
+			Log.i(AdFlakeUtil.ADFLAKE, "Sum of video ration weights is 0 - no video ads available");
+			this.videoAdsAvailable = false;
+		}
+		else
+		{
+			this.videoAdsAvailable = true;
+		}
+
+		this._videoRationsList = rationsList;
 	}
 
 	/**
@@ -641,16 +722,87 @@ public class AdFlakeManager
 		return location;
 	}
 
-	private Extra					_extra;
-	private List<Ration>			_rationsList;
-	private double					_totalWeight			= 0;
-	private WeakReference<Context>	_contextReference;
+	public Ration getNextDartedVideoRation(List<Ration> usedVideoRations)
+	{
+		Random random = new Random();
 
-	private Iterator<Ration>		_rollovers;
+		double actualWeight = 0;
+
+		for (Ration ration : _videoRationsList)
+		{
+			if (usedVideoRations.contains(ration))
+				continue;
+
+			actualWeight += ration.weight;
+		}
+
+		double r = random.nextDouble() * actualWeight;
+		double s = 0;
+
+		Log.d(AdFlakeUtil.ADFLAKE, "Dart is <" + r + "> of <" + actualWeight + "> and total <" + _totalWeight + ">");
+
+		Iterator<Ration> it = this._videoRationsList.iterator();
+		Ration ration = null;
+		while (it.hasNext())
+		{
+			ration = it.next();
+
+			if (usedVideoRations.contains(ration))
+				continue;
+
+			s += ration.weight;
+
+			if (s >= r)
+			{
+				break;
+			}
+		}
+
+		return ration;
+	}
+
+	public int getVideoRationCount()
+	{
+		return _videoRationsList.size();
+	}
+
+	public void prepareVideoAdaptersForLayout(AdFlakeLayout adFlakeLayout)
+	{
+		Log.d(AdFlakeUtil.ADFLAKE, "prepareVideoAdaptersForLayout");
+		
+		for (Ration ration : _videoRationsList)
+		{
+			try
+			{
+				switch (ration.type)
+				{
+					case AdFlakeUtil.NETWORK_TYPE_ADCOLONY:
+						AdColonyVideoAdsAdapter.prepareForRation(ration, adFlakeLayout);
+						break;
+
+					default:
+						break;
+				}
+			}
+			catch (Throwable ex)
+			{
+				Log.e(AdFlakeUtil.ADFLAKE, "prepareVideoAdaptersForLayout failed to prepare for ration=" + ration.name + "\n error=" + ex.toString());
+			}
+		}
+	}
+
+	private Extra _extra;
+	private List<Ration> _rationsList;
+	private List<Ration> _videoRationsList;
+	private double _totalWeight = 0;
+	private double _totalVideoWeight = 0;
+	private WeakReference<Context> _contextReference;
+
+	private Iterator<Ration> _rollovers;
 
 	/** Default config expire timeout is 30 minutes. */
-	private static long				_configExpireTimeout	= 1800000;
+	private static long _configExpireTimeout = 1800000;
 
-	private final static String		PREFS_STRING_TIMESTAMP	= "timestamp";
-	private final static String		PREFS_STRING_CONFIG		= "config";
+	private final static String PREFS_STRING_TIMESTAMP = "timestamp";
+	private final static String PREFS_STRING_CONFIG = "config";
 }

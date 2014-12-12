@@ -2,6 +2,12 @@
 
 For a full detailed change log visit http://adflake.com/SDK
 
+==== Version 4.5.0 (Dec 12 2014) ====
+- Added support for Interstitial Videos
+- Added support for AdColony Interstitial Videos
+- Added support for AdMob Interstitial Videos
+- Added support for Beachfront Interstitial Videos
+
 ==== Version 4.0.2 (Jan 23 2014) [Internal] ====
 - Added "sleeper mode" when no ads are configured (Android)
 

@@ -1,7 +1,7 @@
 /**
  * GoogleAdMobAdsAdapter.java (AdFlakeSDK-Android)
  *
- * Copyright © 2013 MADE GmbH - All Rights Reserved.
+ * Copyright ï¿½ 2013 MADE GmbH - All Rights Reserved.
  *
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * unless otherwise noted in the License section of this document header.
@@ -24,6 +24,8 @@
 
 package com.adflake.adapters;
 
+import java.util.Date;
+
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
@@ -32,46 +34,34 @@ import com.adflake.*;
 import com.adflake.AdFlakeLayout.PushAdViewRunnable;
 import com.adflake.obj.Ration;
 import com.adflake.util.AdFlakeUtil;
-import com.google.ads.*;
-import com.google.ads.AdRequest.ErrorCode;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
 
 /**
  * The Class GoogleAdMobAdsAdapter.
  */
-public class GoogleAdMobAdsAdapter extends AdFlakeAdapter implements AdListener
+public class GoogleAdMobAdsAdapter extends AdFlakeAdapter
 {
-	private AdView	adView;
+	private AdView adView;
 
 	/**
 	 * Instantiates a new google ad mob ads adapter.
-	 *
-	 * @param adFlakeLayout the ad flake layout
-	 * @param ration the ration
+	 * 
+	 * @param adFlakeLayout
+	 *            the ad flake layout
+	 * @param ration
+	 *            the ration
 	 */
 	public GoogleAdMobAdsAdapter(AdFlakeLayout adFlakeLayout, Ration ration)
 	{
 		super(adFlakeLayout, ration);
 	}
 
-	/**
-	 * Gender for ad flake targeting.
-	 *
-	 * @return the ad request. gender
-	 */
-	protected AdRequest.Gender genderForAdFlakeTargeting()
-	{
-		switch (AdFlakeTargeting.getGender())
-		{
-			case MALE:
-				return AdRequest.Gender.MALE;
-			case FEMALE:
-				return AdRequest.Gender.FEMALE;
-			default:
-				return null;
-		}
-	}
-
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see com.adflake.adapters.AdFlakeAdapter#handle()
 	 */
 	@Override
@@ -86,13 +76,69 @@ public class GoogleAdMobAdsAdapter extends AdFlakeAdapter implements AdListener
 		if (activity == null)
 			return;
 
-		adView = new AdView(activity, AdSize.BANNER, _ration.key);
+		adView = new AdView(activity);
+		adView.setAdSize(AdSize.BANNER);
+		adView.setAdUnitId(_ration.key);	
+		adView.setAdListener(new AdListener()
+		{
+			@Override
+			public void onAdClosed()
+			{
+				super.onAdClosed();
+			}
+			 
+			@Override
+			public void onAdFailedToLoad(int errorCode)
+			{
+				super.onAdFailedToLoad(errorCode);
+				
+				log("Google AdMob failure (" + errorCode + ")");
 
-		adView.setAdListener(this);
+				adView.setAdListener(null);
+
+				final AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
+
+				if (adFlakeLayout == null)
+					return;
+
+				adFlakeLayout.rollover();
+			}
+			
+			@Override
+			public void onAdLeftApplication()
+			{
+				super.onAdLeftApplication();
+			}
+			
+			@Override
+			public void onAdLoaded()
+			{
+				super.onAdLoaded();
+
+				log("Google AdMob success");
+
+				AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
+
+				if (adFlakeLayout == null)
+					return;
+
+				adFlakeLayout.adFlakeManager.resetRollover();
+				adFlakeLayout.handler.post(new PushAdViewRunnable(adFlakeLayout, adView));
+				adFlakeLayout.rotateThreadedDelayed();
+			}
+			
+			@Override
+			public void onAdOpened()
+			{
+				super.onAdOpened();
+			}
+		});
 		adView.loadAd(requestForAdFlakeLayout(adFlakeLayout));
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see com.adflake.adapters.AdFlakeAdapter#willDestroy()
 	 */
 	@Override
@@ -107,8 +153,9 @@ public class GoogleAdMobAdsAdapter extends AdFlakeAdapter implements AdListener
 
 	/**
 	 * Log.
-	 *
-	 * @param message the message
+	 * 
+	 * @param message
+	 *            the message
 	 */
 	protected void log(String message)
 	{
@@ -117,13 +164,14 @@ public class GoogleAdMobAdsAdapter extends AdFlakeAdapter implements AdListener
 
 	/**
 	 * Request for ad flake layout.
-	 *
-	 * @param layout the layout
+	 * 
+	 * @param layout
+	 *            the layout
 	 * @return the ad request
 	 */
 	protected AdRequest requestForAdFlakeLayout(AdFlakeLayout layout)
 	{
-		AdRequest result = new AdRequest();
+		final AdRequest.Builder builder = new AdRequest.Builder();
 
 		if (AdFlakeTargeting.getTestMode())
 		{
@@ -132,89 +180,50 @@ public class GoogleAdMobAdsAdapter extends AdFlakeAdapter implements AdListener
 			{
 				Context context = activity.getApplicationContext();
 				String deviceId = AdFlakeUtil.getEncodedDeviceId(context);
-				result.addTestDevice(deviceId);
+				builder.addTestDevice(deviceId);
+
+				builder.addTestDevice(AdRequest.DEVICE_ID_EMULATOR);
 			}
 		}
-		result.setGender(genderForAdFlakeTargeting());
-		result.setBirthday(AdFlakeTargeting.getBirthDate());
+
+		// AdRequest result = builder.build();
+
+		builder.setGender(genderForAdFlakeTargeting());
+		builder.setBirthday(dateForAdFlakeTargeting());
 
 		if (layout.extra.locationOn == 1)
 		{
-			result.setLocation(layout.adFlakeManager.location);
+			builder.setLocation(layout.adFlakeManager.location);
 		}
 
-		result.setKeywords(AdFlakeTargeting.getKeywordSet());
-		return result;
+
+		// result.setKeywords(AdFlakeTargeting.getKeywordSet());
+		
+		final AdRequest request = builder.build();
+		
+		
+		return request;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.google.ads.AdListener#onDismissScreen(com.google.ads.Ad)
-	 */
-	@Override
-	public void onDismissScreen(Ad arg0)
+	private Date dateForAdFlakeTargeting()
 	{
+		if (AdFlakeTargeting.getBirthDate() == null)
+			return null;
+		
+		return AdFlakeTargeting.getBirthDate().getTime();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.google.ads.AdListener#onFailedToReceiveAd(com.google.ads.Ad, com.google.ads.AdRequest.ErrorCode)
-	 */
-	@Override
-	public void onFailedToReceiveAd(Ad arg0, ErrorCode arg1)
+	private int genderForAdFlakeTargeting()
 	{
-		log("failure (" + arg1 + ")");
-
-		arg0.setAdListener(null);
-
-		AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
-
-		if (adFlakeLayout == null)
+		switch (AdFlakeTargeting.getGender())
 		{
-			return;
+			case MALE:
+				return AdRequest.GENDER_MALE;
+			case FEMALE:
+				return AdRequest.GENDER_FEMALE;
+			default:
+				return AdRequest.GENDER_UNKNOWN;
 		}
-
-		adFlakeLayout.rollover();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.google.ads.AdListener#onLeaveApplication(com.google.ads.Ad)
-	 */
-	@Override
-	public void onLeaveApplication(Ad arg0)
-	{
-	}
-
-	/* (non-Javadoc)
-	 * @see com.google.ads.AdListener#onPresentScreen(com.google.ads.Ad)
-	 */
-	@Override
-	public void onPresentScreen(Ad arg0)
-	{
-	}
-
-	/* (non-Javadoc)
-	 * @see com.google.ads.AdListener#onReceiveAd(com.google.ads.Ad)
-	 */
-	@Override
-	public void onReceiveAd(Ad arg0)
-	{
-		log("success");
-
-		AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
-
-		if (adFlakeLayout == null)
-		{
-			return;
-		}
-		if (!(arg0 instanceof AdView))
-		{
-			log("invalid AdView");
-			return;
-		}
-
-		AdView adView = (AdView) arg0;
-
-		adFlakeLayout.adFlakeManager.resetRollover();
-		adFlakeLayout.handler.post(new PushAdViewRunnable(adFlakeLayout, adView));
-		adFlakeLayout.rotateThreadedDelayed();
-	}
 }

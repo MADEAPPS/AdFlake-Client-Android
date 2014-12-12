@@ -1,7 +1,7 @@
 /**
  * AdFlakeUtil.java (AdFlakeSDK-Android)
  *
- * Copyright © 2013 MADE GmbH - All Rights Reserved.
+ * Copyright ï¿½ 2013 MADE GmbH - All Rights Reserved.
  *
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * unless otherwise noted in the License section of this document header.
@@ -86,6 +86,9 @@ public class AdFlakeUtil
 	public static final int		NETWORK_TYPE_HUNTMOBILE		= 29;
 	public static final int		NETWORK_TYPE_TODACELL		= 30;
 	public static final int		NETWORK_TYPE_APPBRAIN		= 31;
+	public static final int		NETWORK_TYPE_ADCOLONY		= 32;
+	public static final int		NETWORK_TYPE_ADMOB_VIDEO	= 33;
+	public static final int		NETWORK_TYPE_BEACHFRONT		= 34;
 
 	public static final int		CUSTOM_TYPE_BANNER			= 1;
 	public static final int		CUSTOM_TYPE_ICON			= 2;
