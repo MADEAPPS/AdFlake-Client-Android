@@ -1,7 +1,7 @@
 /**
  * SampleActivity.java (AdFlakeSDK-Android)
  *
- * Copyright © 2013 MADE GmbH - All Rights Reserved.
+ * Copyright ï¿½ 2013 MADE GmbH - All Rights Reserved.
  *
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * unless otherwise noted in the License section of this document header.
@@ -42,6 +42,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -52,8 +53,12 @@ import java.util.HashSet;
  */
 public class SampleActivity extends Activity implements AdFlakeInterface
 {
+	/** The Status text view. */
+	private TextView _statusTextView;
+
 	/*
 	 * (non-Javadoc)
+	 * 
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
 	 */
 	@Override
@@ -72,14 +77,20 @@ public class SampleActivity extends Activity implements AdFlakeInterface
 
 		// These are density-independent pixel units, as defined in
 		// http://developer.android.com/guide/practices/screens_support.html
+		int width = 320;
+		int height = 52;
+
 		DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-		final float density = displayMetrics.density;
-		final int width = (int) (AdFlakeUtil.BANNER_DEFAULT_WIDTH * density);
-		final int height = (int) (AdFlakeUtil.BANNER_DEFAULT_HEIGHT * density);
+		float density = displayMetrics.density;
+
+		width = (int) (width * density);
+		height = (int) (height * density);
 
 		AdFlakeTargeting.setAge(23);
 		AdFlakeTargeting.setGender(AdFlakeTargeting.Gender.MALE);
-		String keywords[] = { "online", "games", "gaming" };
+		String keywords[] = {
+				"online", "games", "gaming"
+		};
 		AdFlakeTargeting.setKeywordSet(new HashSet<String>(Arrays.asList(keywords)));
 		AdFlakeTargeting.setPostalCode("76137");
 		AdFlakeTargeting.setCompanyName("MADE");
@@ -153,26 +164,66 @@ public class SampleActivity extends Activity implements AdFlakeInterface
 		});
 		layout.addView(button, layoutParams);
 
+		button = new Button(this);
+		button.setText("Request Interstitial Video");
+		button.setOnClickListener(new OnClickListener()
+		{
+			public void onClick(View v)
+			{
+				AdFlakeLayout adFlakeLayout = (AdFlakeLayout) findViewById(R.id.adflake_layout);
+				if (adFlakeLayout == null)
+					return;
+
+				adFlakeLayout.requestVideoAd();
+			}
+		});
+		layout.addView(button, layoutParams);
+
+		button = new Button(this);
+		button.setText("Present Interstitial Video");
+		button.setOnClickListener(new OnClickListener()
+		{
+			public void onClick(View v)
+			{
+				AdFlakeLayout adFlakeLayout = (AdFlakeLayout) findViewById(R.id.adflake_layout);
+				if (adFlakeLayout == null)
+					return;
+
+				if (!adFlakeLayout.isVideoAdLoaded())
+				{
+					Toast.makeText(SampleActivity.this, "No video ad loaded", Toast.LENGTH_SHORT).show();
+					return;
+				}
+
+				adFlakeLayout.presentLoadedVideoAd();
+			}
+		});
+		layout.addView(button, layoutParams);
+
+		button = new Button(this);
+		button.setText("Request & Present Interstitial Video");
+		button.setOnClickListener(new OnClickListener()
+		{
+			public void onClick(View v)
+			{
+				AdFlakeLayout adFlakeLayout = (AdFlakeLayout) findViewById(R.id.adflake_layout);
+				if (adFlakeLayout == null)
+					return;
+
+				adFlakeLayout.requestAndPresentVideoAd();
+			}
+		});
+		layout.addView(button, layoutParams);
+
 		layout.setGravity(Gravity.CENTER_HORIZONTAL);
 		layout.invalidate();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see com.adflake.AdFlakeLayout.AdFlakeInterface#adFlakeGeneric()
-	 */
 	public void adFlakeGeneric()
 	{
 		Log.e(AdFlakeUtil.ADFLAKE, "In adFlakeGeneric()");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see
-	 * com.adflake.AdFlakeLayout.AdFlakeInterface#adFlakeDidPushAdSubView(com
-	 * .adflake.AdFlakeLayout)
-	 */
-	@Override
 	public void adFlakeDidPushAdSubView(AdFlakeLayout layout)
 	{
 		Log.e(AdFlakeUtil.ADFLAKE, "In adFlakeDidPushAdSubView()");
@@ -180,6 +231,34 @@ public class SampleActivity extends Activity implements AdFlakeInterface
 		_statusTextView.setText("Pushed Ad of network:" + layout.activeRation.name);
 	}
 
-	/** The Status text view. */
-	TextView	_statusTextView;
+	public void adFlakeDidPresentFullScreenModal(AdFlakeLayout layout)
+	{
+		_statusTextView.setText("Did present modal view");
+	}
+
+	public void adFlakeWillPresentFullScreenModal(AdFlakeLayout layout)
+	{
+		_statusTextView.setText("Will present modal view");
+	}
+
+	public void adFlakeDidLoadVideoAd(AdFlakeLayout layout)
+	{
+		_statusTextView.setText("Video ad loaded of network:" + layout.getCurrentVideoRation().name);
+		Toast.makeText(SampleActivity.this, "Video ad loaded", Toast.LENGTH_SHORT).show();
+	}
+
+	public void adFlakeWillPresentVideoAdModal(AdFlakeLayout layout)
+	{
+		_statusTextView.setText("Will present video ad of network:" + layout.getCurrentVideoRation().name);
+	}
+
+	public void adFlakeDidFailToRequestVideoAd(AdFlakeLayout layout)
+	{
+		_statusTextView.setText("Did fail to reqeust video ad");
+	}
+
+	public void adFlakeUserDidWatchEntireVideo(AdFlakeLayout layout)
+	{
+		_statusTextView.setText("User watched video ad of network:" + layout.getCurrentVideoRation().name);
+	}
 }

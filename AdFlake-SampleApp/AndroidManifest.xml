@@ -5,8 +5,8 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="7"
-        android:targetSdkVersion="18" />
+        android:minSdkVersion="11"
+        android:targetSdkVersion="21" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -17,6 +17,7 @@
 
     <application
         android:allowBackup="true"
+        android:hardwareAccelerated="true"
         android:icon="@drawable/icon"
         android:label="@string/app_name" >
         <activity
@@ -36,10 +37,36 @@
             <!-- <meta-data android:value="52457efc3a945c8936000002" android:name="ADFLAKE_KEY" /> -->
         </activity>
 
-        <!-- AdMob integration -->
+        <!--
+        NOTE: when linking with GooglePlay services uncomment this line.
+        Google PlayServices AdMob integration 
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+        -->
         <activity
-            android:name="com.google.ads.AdActivity"
-            android:configChanges="orientation|keyboard|keyboardHidden|screenLayout|uiMode|screenSize|smallestScreenSize" />
+            android:name="com.google.android.gms.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />
+
+        <!-- AdColony Video Ads -->
+        <!-- NOTE: according to AdColony it is recommended to set android:hardwareAccelerated to true in your application tag -->
+        <activity
+            android:name="com.jirbo.adcolony.AdColonyOverlay"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
+        <activity
+            android:name="com.jirbo.adcolony.AdColonyFullscreen"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+        <activity
+            android:name="com.jirbo.adcolony.AdColonyBrowser"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
+        <!-- Beachfront IO Video Ads -->
+        <activity
+            android:name="com.bfio.ad.BFIOActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <!-- MdotM integration -->
         <activity
@@ -105,7 +132,7 @@
         <!-- If Activity-specific key is omitted, the App-wide key will be used. -->
         <meta-data
             android:name="ADFLAKE_KEY"
-            android:value="52457efc3a945c8936000002" />
+            android:value="5489c3e1a7cfb3bf8cd5441a" />
     </application>
 
 </manifest>
