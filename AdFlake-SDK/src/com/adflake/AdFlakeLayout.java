@@ -1014,6 +1014,7 @@ public class AdFlakeLayout extends RelativeLayout
 
 		_currentVideoAdapter.playLoadedVideoAd();
 
+		_videoAdLoaded = false;
 		_autoPresentVideoAd = false;
 	}
 

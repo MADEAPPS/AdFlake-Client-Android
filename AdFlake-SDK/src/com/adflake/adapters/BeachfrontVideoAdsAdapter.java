@@ -11,10 +11,104 @@ import com.bfio.ad.BFIOInterstitial;
 import com.bfio.ad.BFIOInterstitial.InterstitialListener;
 import com.bfio.ad.model.BFIOInterstitalAd;
 
-public class BeachfrontVideoAdsAdapter extends AdFlakeAdapter implements InterstitialListener
+public class BeachfrontVideoAdsAdapter extends AdFlakeAdapter
 {
-	BFIOInterstitial _interstitial;
+	private static BFIOInterstitial _interstitial;
+	/**
+	 * it seems that previous listeners are not unregistered, so we revert to a
+	 * static instance.
+	 */
 	BFIOInterstitalAd _ad;
+
+	public static BeachfrontVideoAdsAdapter currentAdapter;
+	public static Activity currentActivity;
+
+	private static InterstitialListener _listener = new InterstitialListener()
+	{
+		@Override
+		public void onInterstitialClicked()
+		{
+			if (currentAdapter == null)
+				return;
+
+			Log.d(AdFlakeUtil.ADFLAKE, "BeachFront onInterstitialClicked");
+			AdFlakeLayout adFlakeLayout = BeachfrontVideoAdsAdapter.currentAdapter._adFlakeLayoutReference.get();
+
+			if (adFlakeLayout == null)
+				return;
+
+			adFlakeLayout.adapterDidFinishVideoAd(currentAdapter, true);
+		}
+
+		@Override
+		public void onInterstitialCompleted()
+		{
+			if (currentAdapter == null)
+				return;
+
+			Log.d(AdFlakeUtil.ADFLAKE, "BeachFront onInterstitialCompleted");
+			AdFlakeLayout adFlakeLayout = currentAdapter._adFlakeLayoutReference.get();
+
+			if (adFlakeLayout == null)
+				return;
+
+			adFlakeLayout.adapterDidFinishVideoAd(currentAdapter, true);
+			currentAdapter._ad = null;
+		}
+
+		@Override
+		public void onInterstitialDismissed()
+		{
+			if (currentAdapter == null)
+				return;
+
+			Log.d(AdFlakeUtil.ADFLAKE, "BeachFront onInterstitialDismissed");
+			AdFlakeLayout adFlakeLayout = currentAdapter._adFlakeLayoutReference.get();
+
+			if (adFlakeLayout == null)
+				return;
+
+			adFlakeLayout.adapterDidFinishVideoAd(currentAdapter, false);
+			currentAdapter._ad = null;
+		}
+
+		@Override
+		public void onInterstitialFailed(BFIOErrorCode arg0)
+		{
+			if (currentAdapter == null)
+				return;
+
+			AdFlakeLayout adFlakeLayout = currentAdapter._adFlakeLayoutReference.get();
+
+			if (adFlakeLayout == null)
+				return;
+
+			adFlakeLayout.adapterDidFailToReceiveVideoAdWithError(currentAdapter, "ad failed ErrorCode=" + arg0);
+			currentAdapter._ad = null;
+		}
+
+		@Override
+		public void onInterstitialStarted()
+		{
+			Log.d(AdFlakeUtil.ADFLAKE, "BeachFront onInterstitialStarted");
+		}
+
+		@Override
+		public void onReceiveInterstitial(BFIOInterstitalAd ad)
+		{
+			if (currentAdapter == null)
+				return;
+
+			AdFlakeLayout adFlakeLayout = currentAdapter._adFlakeLayoutReference.get();
+
+			if (adFlakeLayout == null)
+				return;
+
+			// If an Ad is available it will call back to
+			currentAdapter._ad = ad;
+			adFlakeLayout.adapterDidReceiveVideoAd(currentAdapter);
+		}
+	};
 
 	/**
 	 * Instantiates a new google ad mob ads adapter.
@@ -44,10 +138,12 @@ public class BeachfrontVideoAdsAdapter extends AdFlakeAdapter implements Interst
 		String appID = _ration.key;
 		String zoneID = _ration.key2;
 
-		appID = "feb130d1-c7be-4c71-b87c-5b94bc92326d";
-		zoneID = "8b56902b-3c98-47ac-9e17-6e08067c74ca";
-
-		_interstitial = new BFIOInterstitial(activity, this);
+		if (_interstitial == null || BeachfrontVideoAdsAdapter.currentActivity != activity)
+		{
+			_interstitial = new BFIOInterstitial(activity, _listener);
+			BeachfrontVideoAdsAdapter.currentActivity = activity;
+		}
+		BeachfrontVideoAdsAdapter.currentAdapter = this;
 		_interstitial.requestInterstitial(appID, zoneID);
 	}
 
@@ -59,8 +155,6 @@ public class BeachfrontVideoAdsAdapter extends AdFlakeAdapter implements Interst
 	@Override
 	public void willDestroy()
 	{
-		_interstitial = null;
-		_ad = null;
 		super.willDestroy();
 	}
 
@@ -81,74 +175,5 @@ public class BeachfrontVideoAdsAdapter extends AdFlakeAdapter implements Interst
 		}
 
 		_interstitial.showInterstitial(_ad);
-	}
-
-	@Override
-	public void onInterstitialClicked()
-	{
-		Log.d(AdFlakeUtil.ADFLAKE, "BeachFront onInterstitialClicked");
-		AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
-
-		if (adFlakeLayout == null)
-			return;
-		
-		adFlakeLayout.adapterDidFinishVideoAd(this, true);
-	}
-
-	@Override
-	public void onInterstitialCompleted()
-	{
-		Log.d(AdFlakeUtil.ADFLAKE, "BeachFront onInterstitialCompleted");
-		AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
-
-		if (adFlakeLayout == null)
-			return;
-
-		adFlakeLayout.adapterDidFinishVideoAd(this, true);
-		_ad = null;
-	}
-
-	@Override
-	public void onInterstitialDismissed()
-	{
-		Log.d(AdFlakeUtil.ADFLAKE, "BeachFront onInterstitialDismissed");
-		AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
-
-		if (adFlakeLayout == null)
-			return;
-
-		adFlakeLayout.adapterDidFinishVideoAd(this, false);
-		_ad = null;
-
-	}
-
-	@Override
-	public void onInterstitialFailed(BFIOErrorCode arg0)
-	{
-		AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
-
-		if (adFlakeLayout == null)
-			return;
-
-		adFlakeLayout.adapterDidFailToReceiveVideoAdWithError(this, "ad failed ErrorCode=" + arg0);
-	}
-
-	@Override
-	public void onInterstitialStarted()
-	{
-		Log.d(AdFlakeUtil.ADFLAKE, "BeachFront onInterstitialStarted");
-	}
-
-	@Override
-	public void onReceiveInterstitial(BFIOInterstitalAd ad)
-	{
-		AdFlakeLayout adFlakeLayout = _adFlakeLayoutReference.get();
-
-		if (adFlakeLayout == null)
-			return;
-
-		// If an Ad is available it will call back to
-		_ad = ad;
-		adFlakeLayout.adapterDidReceiveVideoAd(this);
 	}
 }
